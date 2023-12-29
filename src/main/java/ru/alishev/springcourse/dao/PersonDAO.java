@@ -80,6 +80,7 @@ public class PersonDAO
 
         try
         {
+            Statement statement = connection.createStatement();
             int i = statement.executeUpdate(String.format("insert into person values(%d, '%s', %d, '%s')", person.getId(), person.getName(), person.getAge(), person.getEmail()));
             System.out.println("save executeUpdate result: " + i);
         }
