@@ -41,60 +41,18 @@ public class PersonDAO
 
     public void save(Person person)
     {
-        person.setId(Math.abs((int)(System.currentTimeMillis() / 1000)));
-
-        try
-        {
-            PreparedStatement statement = connection.prepareStatement("insert into person values(?, ?, ?, ?)");
-            statement.setInt(1, person.getId());
-            statement.setString(2, person.getName());
-            statement.setInt(3, person.getAge());
-            statement.setString(4, person.getEmail());
-
-            int result = statement.executeUpdate();
-
-            System.out.println("save executeUpdate result: " + result);
-        }
-        catch (SQLException e)
-        {
-            e.printStackTrace();
-        }
+        jdbcTemplate.update("insert into person values(?, ?, ?, ?)",
+            Math.abs((int)(System.currentTimeMillis() / 1000)), person.getName(), person.getAge(), person.getEmail());
     }
 
     public void update(int id, Person updatedPerson)
     {
-        try
-        {
-            PreparedStatement statement = connection.prepareStatement("update person set name = ?, age = ?, email = ? where id = ?");
-            statement.setString(1, updatedPerson.getName());
-            statement.setInt(2, updatedPerson.getAge());
-            statement.setString(3, updatedPerson.getEmail());
-            statement.setInt(4, updatedPerson.getId());
-
-            int result = statement.executeUpdate();
-
-            System.out.println("update executeUpdate result: " + result);
-        }
-        catch (SQLException e)
-        {
-            e.printStackTrace();
-        }
+        jdbcTemplate.update("update person set name = ?, age = ?, email = ? where id = ?",
+            updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), updatedPerson.getId());
     }
 
     public void delete(int id)
     {
-        try
-        {
-            PreparedStatement statement = connection.prepareStatement("delete from person where id = ?");
-            statement.setInt(1, id);
-
-            int result = statement.executeUpdate();
-
-            System.out.println("delete executeUpdate result: " + result);
-        }
-        catch (SQLException e)
-        {
-            e.printStackTrace();
-        }
+        jdbcTemplate.update("delete from person where id = ?", id);
     }
 }
