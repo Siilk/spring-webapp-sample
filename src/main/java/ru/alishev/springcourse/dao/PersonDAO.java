@@ -4,42 +4,89 @@ import com.github.javafaker.Faker;
 import org.springframework.stereotype.Component;
 import ru.alishev.springcourse.models.Person;
 
+import java.sql.*;
 import java.util.*;
 
 @Component
 public class PersonDAO
 {
+    //todo move to props
+    public static final String DB_URL = "jdbc:postgresql://localhost:5432/springcourse_1_db";
+    public static final String DB_USERNAME = "postgres";
+    public static final String DB_PASS = "fuantadzi";
+
     private static int PEOPLE_COUNT;
 
-    private final List<Person> people;
+    public static Connection connection;
 
+    static
     {
-        people = new ArrayList<>();
-
-        Random random = new Random(42);
-        for (int i = 0; i < 15; i++)
+        try
         {
-            Faker faker = Faker.instance(new Random(random.nextInt()));
-            String name = faker.name().fullName();
+            Class.forName("org.postgresql.Driver");
+        }
+        catch (ClassNotFoundException e)
+        {
+            e.printStackTrace();
+        }
 
-            people.add(new Person(++PEOPLE_COUNT, name, Math.abs(random.nextInt()) + 1, String.format("%s@%s.com", name.replaceAll(" ", "_"), faker.cat())));
+        try
+        {
+            connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASS);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
         }
     }
 
     public List<Person> index()
     {
-        return people;
+        List<Person> res = new ArrayList<>();
+
+        try
+        {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("select * from person");
+
+            while (resultSet.next())
+            {
+                Person person = new Person
+                (
+                    resultSet.getInt("id"),
+                    resultSet.getString("name"),
+                    resultSet.getInt("age"),
+                    resultSet.getString("email")
+                );
+                res.add(person);
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        return res;
     }
 
     public Person show(int id)
     {
-        return people.stream().filter(person -> person.getId() == id).findAny().orElse(null);
+        return null;
+//        return people.stream().filter(person -> person.getId() == id).findAny().orElse(null);
     }
 
     public void save(Person person)
     {
         person.setId(++PEOPLE_COUNT);
-        people.add(person);
+
+        try
+        {
+            int i = statement.executeUpdate(String.format("insert into person values(%d, '%s', %d, '%s')", person.getId(), person.getName(), person.getAge(), person.getEmail()));
+            System.out.println("save executeUpdate result: " + i);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public void update(int id, Person updatedPerson)
@@ -53,6 +100,6 @@ public class PersonDAO
 
     public void delete(int id)
     {
-        people.removeIf(p -> p.getId() == id);
+//        people.removeIf(p -> p.getId() == id);
     }
 }
