@@ -1,11 +1,11 @@
 package ru.alishev.springcourse.dao;
 
-import com.github.javafaker.Faker;
 import org.springframework.stereotype.Component;
 import ru.alishev.springcourse.models.Person;
 
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 @Component
 public class PersonDAO
@@ -14,8 +14,6 @@ public class PersonDAO
     public static final String DB_URL = "jdbc:postgresql://localhost:5432/springcourse_1_db";
     public static final String DB_USERNAME = "postgres";
     public static final String DB_PASS = "fuantadzi";
-
-    private static int PEOPLE_COUNT;
 
     public static Connection connection;
 
@@ -51,13 +49,7 @@ public class PersonDAO
 
             while (resultSet.next())
             {
-                Person person = new Person
-                (
-                    resultSet.getInt("id"),
-                    resultSet.getString("name"),
-                    resultSet.getInt("age"),
-                    resultSet.getString("email")
-                );
+                Person person = fillPersonObj(resultSet);
                 res.add(person);
             }
         }
@@ -68,21 +60,55 @@ public class PersonDAO
         return res;
     }
 
+    private Person fillPersonObj(ResultSet resultSet) throws SQLException
+    {
+        return new Person
+        (
+            resultSet.getInt("id"),
+            resultSet.getString("name"),
+            resultSet.getInt("age"),
+            resultSet.getString("email")
+        );
+    }
+
     public Person show(int id)
     {
-        return null;
-//        return people.stream().filter(person -> person.getId() == id).findAny().orElse(null);
+        Person person = null;
+        try
+        {
+            PreparedStatement statement = connection.prepareStatement("select * from person where id = ?");
+
+            statement.setInt(1, id);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next())
+            {
+                person = fillPersonObj(resultSet);
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        return person;
     }
 
     public void save(Person person)
     {
-        person.setId(++PEOPLE_COUNT);
+        person.setId(Math.abs((int)(System.currentTimeMillis() / 1000)));
 
         try
         {
-            Statement statement = connection.createStatement();
-            int i = statement.executeUpdate(String.format("insert into person values(%d, '%s', %d, '%s')", person.getId(), person.getName(), person.getAge(), person.getEmail()));
-            System.out.println("save executeUpdate result: " + i);
+            PreparedStatement statement = connection.prepareStatement("insert into person values(?, ?, ?, ?)");
+            statement.setInt(1, person.getId());
+            statement.setString(2, person.getName());
+            statement.setInt(3, person.getAge());
+            statement.setString(4, person.getEmail());
+
+            int result = statement.executeUpdate();
+
+            System.out.println("save executeUpdate result: " + result);
         }
         catch (SQLException e)
         {
@@ -92,15 +118,38 @@ public class PersonDAO
 
     public void update(int id, Person updatedPerson)
     {
-        Person personToBeUpdated = show(id);
+        try
+        {
+            PreparedStatement statement = connection.prepareStatement("update person set name = ?, age = ?, email = ? where id = ?");
+            statement.setString(1, updatedPerson.getName());
+            statement.setInt(2, updatedPerson.getAge());
+            statement.setString(3, updatedPerson.getEmail());
+            statement.setInt(4, updatedPerson.getId());
 
-        personToBeUpdated.setName(updatedPerson.getName());
-        personToBeUpdated.setAge(updatedPerson.getAge());
-        personToBeUpdated.setEmail(updatedPerson.getEmail());
+            int result = statement.executeUpdate();
+
+            System.out.println("update executeUpdate result: " + result);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public void delete(int id)
     {
-//        people.removeIf(p -> p.getId() == id);
+        try
+        {
+            PreparedStatement statement = connection.prepareStatement("delete from person where id = ?");
+            statement.setInt(1, id);
+
+            int result = statement.executeUpdate();
+
+            System.out.println("delete executeUpdate result: " + result);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
     }
 }
