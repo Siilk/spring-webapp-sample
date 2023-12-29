@@ -1,6 +1,7 @@
 package ru.alishev.springcourse.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.alishev.springcourse.models.Person;
@@ -29,12 +30,12 @@ public class PersonDAO
 
     public List<Person> index()
     {
-        return jdbcTemplate.query("select * from person", new PersonMapper());
+        return jdbcTemplate.query("select * from person", new BeanPropertyRowMapper<>(Person.class));
     }
 
     public Person show(int id)
     {
-        List<Person> query = jdbcTemplate.query("select * from person where id = ?", new Object[]{id}, new PersonMapper());
+        List<Person> query = jdbcTemplate.query("select * from person where id = ?", new Object[]{id}, new BeanPropertyRowMapper<>(Person.class));
         return (query == null || query.isEmpty()) ? null : query.get(0);
     }
 
