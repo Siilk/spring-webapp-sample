@@ -1,5 +1,6 @@
 package ru.alishev.springcourse.dao;
 
+import com.github.javafaker.Address;
 import com.github.javafaker.Faker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -50,13 +51,13 @@ public class PersonDAO
 
     public void save(Person person)
     {
-        jdbcTemplate.update("insert into person(name, age, email) values(?, ?, ?)", person.getName(), person.getAge(), person.getEmail());
+        jdbcTemplate.update("insert into person(name, age, email, address) values(?, ?, ?, ?)", person.getName(), person.getAge(), person.getEmail(), person.getAddress());
     }
 
     public void update(int id, Person updatedPerson)
     {
-        jdbcTemplate.update("update person set name = ?, age = ?, email = ? where id = ?",
-            updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), updatedPerson.getId());
+        jdbcTemplate.update("update person set name = ?, age = ?, email = ?, address = ? where id = ?",
+            updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), updatedPerson.getId(), updatedPerson.getAddress());
     }
 
     public void delete(int id)
@@ -69,7 +70,7 @@ public class PersonDAO
         long start = System.currentTimeMillis();
         generatePeople(1000).forEach
         (
-            person -> jdbcTemplate.update("insert into person(name, age, email) values(?, ?, ?)", person.getName(), person.getAge(), person.getEmail())
+            person -> jdbcTemplate.update("insert into person(name, age, email, address) values(?, ?, ?, ?)", person.getName(), person.getAge(), person.getEmail(), person.getAddress())
         );
 
         System.out.println("No batch duration: " + (System.currentTimeMillis() - start));
@@ -80,7 +81,7 @@ public class PersonDAO
         long start = System.currentTimeMillis();
         final List<Person> people = generatePeople(1000);
 
-        jdbcTemplate.batchUpdate("insert into person(name, age, email) values(?, ?, ?)", new BatchPreparedStatementSetter()
+        jdbcTemplate.batchUpdate("insert into person(name, age, email, address) values(?, ?, ?, ?)", new BatchPreparedStatementSetter()
         {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException
@@ -89,6 +90,7 @@ public class PersonDAO
                 ps.setString(1, person.getName());
                 ps.setInt(2, person.getAge());
                 ps.setString(3, person.getEmail());
+                ps.setString(4, person.getAddress());
             }
 
             @Override
@@ -104,17 +106,19 @@ public class PersonDAO
     private List<Person> generatePeople(int number)
     {
         Random random = new Random();
-        Faker faker = Faker.instance(random);
+        Faker faker = Faker.instance(new Locale("en-AU"), random);
         List<Person> people = Collections.nCopies(number, null).stream().map
         (
             empty -> {
                 String  name = faker.name().fullName();
+                Address address = faker.address();
                 return new Person
                 (
                     -1,
                     name,
                     (int)Math.abs(Math.round(Math.random() * 100) + 1),
-                    String.format("%s@%s", name, faker.cat().name()).replaceAll(" ", "_").replaceAll("\\.", "") + ".com"
+                    String.format("%s@%s", name, faker.cat().name()).replaceAll(" ", "_").replaceAll("\\.", "") + ".com",
+                    address.country().replaceAll(" ", "").replaceAll("\\.", "").replaceAll(",", "").replaceAll("-", "") + ", " + address.cityName().replaceAll(" ", "") + ", " + address.zipCode()
                 );
             }
         ).collect(Collectors.toList());

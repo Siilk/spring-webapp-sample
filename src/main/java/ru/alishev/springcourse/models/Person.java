@@ -1,9 +1,6 @@
 package ru.alishev.springcourse.models;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * @author Neil Alishev
@@ -23,17 +20,19 @@ public class Person
     @Email(message = "Email should be valid")
     private String email;
 
-    public Person()
-    {
+    @NotEmpty
+    @Pattern(regexp = "[A-Z]\\w+, [A-Z]\\w+, \\d{4}", message = "Address format: Country, City, Zipcode")
+    private String address;
 
-    }
+    public Person() {}
 
-    public Person(long id, String name, int age, String email)
+    public Person(long id, String name, int age, String email, String address)
     {
         this.id = id;
         this.name = name;
         this.age = age;
         this.email = email;
+        this.address = address;
     }
 
     public long getId()
@@ -76,6 +75,16 @@ public class Person
         this.email = email;
     }
 
+    public String getAddress()
+    {
+        return address;
+    }
+
+    public void setAddress(String address)
+    {
+        this.address = address;
+    }
+
     @Override
     public String toString()
     {
@@ -84,6 +93,7 @@ public class Person
             ", name='" + name + '\'' +
             ", age=" + age +
             ", email='" + email + '\'' +
+            ", address='" + address + '\'' +
             '}';
     }
 }
