@@ -1,7 +1,10 @@
 package ru.alishev.springcourse.dao;
 
+import com.github.javafaker.Faker;
+import com.github.javafaker.Name;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -9,6 +12,7 @@ import ru.alishev.springcourse.models.Person;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class PersonDAO
@@ -43,7 +47,7 @@ public class PersonDAO
     public void save(Person person)
     {
         jdbcTemplate.update("insert into person values(?, ?, ?, ?)",
-            Math.abs((int)(System.currentTimeMillis() / 1000)), person.getName(), person.getAge(), person.getEmail());
+            Math.abs(System.currentTimeMillis()), person.getName(), person.getAge(), person.getEmail());
     }
 
     public void update(int id, Person updatedPerson)
@@ -55,5 +59,71 @@ public class PersonDAO
     public void delete(int id)
     {
         jdbcTemplate.update("delete from person where id = ?", id);
+    }
+
+    public void testMultipleUpdate()
+    {
+        long start = System.currentTimeMillis();
+        generatePeople(1000).forEach
+        (
+            person -> jdbcTemplate.update("insert into person values(?, ?, ?, ?)", person.getId(), person.getName(), person.getAge(), person.getEmail())
+        );
+
+        System.out.println("No batch duration: " + (System.currentTimeMillis() - start));
+    }
+
+    public void testBatchUpdate()
+    {
+        long start = System.currentTimeMillis();
+        final List<Person> people = generatePeople(1000);
+
+        jdbcTemplate.batchUpdate("insert into person values(?, ?, ?, ?)", new BatchPreparedStatementSetter()
+        {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException
+            {
+                Person person = people.get(i);
+                ps.setLong(1, person.getId());
+                ps.setString(2, person.getName());
+                ps.setInt(3, person.getAge());
+                ps.setString(4, person.getEmail());
+            }
+
+            @Override
+            public int getBatchSize()
+            {
+                return people.size();
+            }
+        });
+
+        System.out.println("No batch duration: " + (System.currentTimeMillis() - start));
+    }
+
+    private List<Person> generatePeople(int number)
+    {
+        Random random = new Random();
+        Faker faker = Faker.instance(random);
+        List<Person> people = Collections.nCopies(number, null).stream().map
+        (
+            empty -> {
+                String  name = faker.name().fullName();
+                return new Person
+                (
+                    System.currentTimeMillis(),
+                    name,
+                    (int)Math.abs(Math.round(Math.random() * 100) + 1),
+                    String.format("%s@%s", name, faker.cat().name()).replaceAll(" ", "_").replaceAll("\\.", "") + ".com"
+                );
+            }
+        ).collect(Collectors.toList());
+
+        return people;
+    }
+
+    public static void main(String[] args)
+    {
+        PersonDAO personDAO = new PersonDAO(null);
+
+        personDAO.generatePeople(10).forEach(System.out::println);
     }
 }
