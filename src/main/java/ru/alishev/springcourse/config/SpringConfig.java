@@ -5,6 +5,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -16,17 +18,21 @@ import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 import ru.alishev.springcourse.dao.PersonDAO;
 
 import javax.sql.DataSource;
+import java.util.Objects;
 
 @Configuration
-@ComponentScan("ru.alishev.springcourse")
 @EnableWebMvc
+@ComponentScan("ru.alishev.springcourse")
+@PropertySource("classpath:database.properties")
 public class SpringConfig implements WebMvcConfigurer {
 
     private final ApplicationContext applicationContext;
+    private final Environment environment;
 
     @Autowired
-    public SpringConfig(ApplicationContext applicationContext) {
+    public SpringConfig(ApplicationContext applicationContext, Environment environment) {
         this.applicationContext = applicationContext;
+        this.environment = environment;
     }
 
     @Bean
@@ -51,10 +57,10 @@ public class SpringConfig implements WebMvcConfigurer {
     {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
 
-        dataSource.setDriverClassName(PersonDAO.DB_DRIVER_CLASS);
-        dataSource.setUrl(PersonDAO.DB_URL);
-        dataSource.setUsername(PersonDAO.DB_USERNAME);
-        dataSource.setPassword(PersonDAO.DB_PASS);
+        dataSource.setDriverClassName(Objects.requireNonNull(environment.getProperty("DB_DRIVER_CLASS")));
+        dataSource.setUrl(Objects.requireNonNull(environment.getProperty("DB_URL")));
+        dataSource.setUsername(Objects.requireNonNull(environment.getProperty("DB_USERNAME")));
+        dataSource.setPassword(Objects.requireNonNull(environment.getProperty("DB_PASS")));
 
         return dataSource;
     }
@@ -72,3 +78,4 @@ public class SpringConfig implements WebMvcConfigurer {
         registry.viewResolver(resolver);
     }
 }
+
