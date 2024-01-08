@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin assignment</title>
+</head>
+<body>
+
+<form th:method="POST" th:action="@{/admin/add}">
+    <label for="person">Select person</label>
+    <select id="person" th:object="${person}" th:field="*{name}">
+        <option th:each="prsn : ${people}" th:value="${prsn.getId()}" th:text="${prsn.getName()}"></option>
+    </select>
+
+    <input type="submit" value="Submit">
+</form>
+
+</body>
+</html>
