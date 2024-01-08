@@ -16,14 +16,6 @@ import java.util.stream.Collectors;
 @Component
 public class PersonDAO
 {
-    //todo move to props
-    public static final String DB_DRIVER_CLASS = "org.postgresql.Driver";
-    public static final String DB_URL = "jdbc:postgresql://localhost:5432/springcourse_1_db";
-    public static final String DB_USERNAME = "postgres";
-    public static final String DB_PASS = "fuantadzi";
-
-    public static Connection connection;
-
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -107,7 +99,7 @@ public class PersonDAO
     {
         Random random = new Random();
         Faker faker = Faker.instance(new Locale("en-AU"), random);
-        List<Person> people = Collections.nCopies(number, null).stream().map
+        return Collections.nCopies(number, null).stream().map
         (
             empty -> {
                 String  name = faker.name().fullName();
@@ -122,8 +114,6 @@ public class PersonDAO
                 );
             }
         ).collect(Collectors.toList());
-
-        return people;
     }
 
     public static void main(String[] args)
